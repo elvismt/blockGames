@@ -37,6 +37,7 @@ protected:
     void drawTetromino(QPainter &painter, const Tetromino &tetr);
     void keyPressEvent(QKeyEvent *event) override;
     void newPiece();
+    void addToLandscape();
     bool fits(const Tetromino &tetr, const QPoint &pos);
 
 protected slots:
@@ -45,6 +46,12 @@ protected slots:
 
 protected:
 
+    struct LandscapeBlock {
+        QPoint pos;
+        QColor pen;
+        QColor brush;
+    };
+
     Tetromino *currentPiece_{nullptr};
-    QVector<std::pair<QPoint,QColor>> landscape_;
+    QVector<LandscapeBlock> landscape_;
 };

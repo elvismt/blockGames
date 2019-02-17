@@ -112,14 +112,30 @@ void Tetris::drawTetromino(QPainter &painter, const Tetromino &tetr)
 
 bool Tetris::fits(const Tetromino &tetr, const QPoint &iPos)
 {
+    const auto size = this->size();
+    const int W = size.width() / blockLen_;
+    const int H = size.height() / blockLen_;
+
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-            QPoint pos(iPos.x() + i, iPos.y() + j);
+            const QPoint basePos(i, j);
 
-            // Piece does not fit is one of it's blocks is
-            // at the same position as a landscape block
-            for (auto &pair : landscape_) {
-                if (tetr[pos] && pair.first == pos) {
+            if (tetr[basePos]) {
+                const QPoint pos = iPos + basePos;
+
+                // Check for colision with a landscape block
+                for (const auto &landBlock : landscape_) {
+                    if (landBlock.pos == pos) {
+                        return false;
+                    }
+                }
+
+                // Check for colision with the walls or ground
+                if (pos.x() < 0 || pos.x() >= W) {
+                    return false;
+                }
+                if (pos.y() < 0 || pos.y() >= H) {
+                    Q_ASSERT(pos.y() >= 0);
                     return false;
                 }
             }
@@ -142,6 +158,13 @@ void Tetris::paintEvent(QPaintEvent *event)
     BlockGame::paintEvent(event);
     QPainter painter(this);
 
+    for (auto &landBlock : landscape_) {
+        painter.setPen(QPen(landBlock.pen));
+        painter.setBrush(QBrush(landBlock.brush));
+        drawBlock(painter, landBlock.pos);
+    }
+
+    // Draw the current moving tetromino
     drawTetromino(painter, *currentPiece_);
 }
 
@@ -160,6 +183,21 @@ void Tetris::newPiece()
     currentPiece_->pos = QPoint(x - 2, 0);
 }
 
+void Tetris::addToLandscape()
+{
+    auto &tetr = *currentPiece_;
+
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            QPoint pos(i, j);
+            if (tetr[pos]) {
+                QPoint landPos = tetr.pos + pos;
+                landscape_.append({landPos, tetr.pen.color(), tetr.brush.color()});
+            }
+        }
+    }
+}
+
 void Tetris::gameLoop()
 {
     Q_ASSERT(currentPiece_);
@@ -167,6 +205,9 @@ void Tetris::gameLoop()
 
     if (fits(*currentPiece_, nextPos)) {
         currentPiece_->pos = nextPos;
+    } else {
+        addToLandscape();
+        newPiece();
     }
 
     repaint();
@@ -174,5 +215,29 @@ void Tetris::gameLoop()
 
 void Tetris::keyPressEvent(QKeyEvent *event)
 {
+    auto key = event->key();
 
+    if (key == Qt::Key_Up) {
+        currentPiece_->rotation += 1;
+        currentPiece_->rotation %= 4;
+        repaint();
+    } else if (key == Qt::Key_Left) {
+        auto nextPos = currentPiece_->pos + QPoint(-1, 0);
+        if (fits(*currentPiece_, nextPos)) {
+            currentPiece_->pos = nextPos;
+            repaint();
+        }
+    } else if (key == Qt::Key_Right) {
+        auto nextPos = currentPiece_->pos + QPoint(1, 0);
+        if (fits(*currentPiece_, nextPos)) {
+            currentPiece_->pos = nextPos;
+            repaint();
+        }
+    } else if (key == Qt::Key_Down) {
+        auto nextPos = currentPiece_->pos + QPoint(0, 1);
+        if (fits(*currentPiece_, nextPos)) {
+            currentPiece_->pos = nextPos;
+            repaint();
+        }
+    }
 }
