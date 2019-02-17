@@ -23,7 +23,10 @@ class Tetris: public BlockGame
 
 public:
 
-    Tetris(const QString &title, int w, int h, int blockLen=DEFAULT_BLOCK_LEN);
+    Tetris(const QString &title="Tetris",
+           int w=24,
+           int h=36,
+           int blockLen=DEFAULT_BLOCK_LEN);
 
 protected:
 

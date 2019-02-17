@@ -14,15 +14,20 @@
 
 #pragma once
 #include <QWidget>
-#include <QImage>
+#include <QColor>
 
 class BlockGame : public QWidget {
         Q_OBJECT
 public:
 
-    static constexpr int DEFAULT_BLOCK_LEN = 20;
+    static constexpr int DEFAULT_BLOCK_LEN = 10;
+    static constexpr int DEFAULT_WIDTH = 600/DEFAULT_BLOCK_LEN;
+    static constexpr int DEFAULT_HEIGHT = 500/DEFAULT_BLOCK_LEN;
 
-    BlockGame(const QString &title, int w, int h, int blockLen=DEFAULT_BLOCK_LEN);
+    BlockGame(const QString &title,
+              int w=DEFAULT_WIDTH,
+              int h=DEFAULT_HEIGHT,
+              int blockLen=DEFAULT_BLOCK_LEN);
 
 protected:
     virtual void paintEvent(QPaintEvent *event) override;
@@ -30,6 +35,6 @@ protected:
     void drawBlock(QPainter &painter, const QPoint pos, int len=1);
 
 private:
-    QImage image_;
+    QColor backgroundColor_{Qt::white};
     int blockLen_ = DEFAULT_BLOCK_LEN;
 };

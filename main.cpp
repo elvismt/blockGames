@@ -18,8 +18,8 @@
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
 
-    Tetris window("Tetris", 12, 22);
-    window.show();
+    Tetris tetrisGame;
+    tetrisGame.show();
 
     return app.exec();
 }

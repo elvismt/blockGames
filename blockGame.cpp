@@ -26,6 +26,7 @@ BlockGame::BlockGame(const QString &title, int w, int h, int blockLen)
     h *= blockLen_;
     setMinimumSize(w, h);
     setMaximumSize(w, h);
+    setAutoFillBackground(false);
 }
 
 void BlockGame::paintEvent(QPaintEvent *)
@@ -34,7 +35,7 @@ void BlockGame::paintEvent(QPaintEvent *)
     QPainter painter(this);
 
     // Make background white
-    painter.fillRect(QRect({0,0}, size), QBrush(Qt::white));
+    painter.fillRect(QRect({0,0}, size), QBrush(backgroundColor_));
 }
 
 void BlockGame::drawBlock(QPainter &painter, const QPoint iPos, int len)
