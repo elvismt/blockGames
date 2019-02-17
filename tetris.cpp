@@ -14,6 +14,8 @@
 
 #include "tetris.h"
 #include <QPainter>
+#include <QKeyEvent>
+#include <QDateTime>
 
 static const int TETR_PEN_WIDTH = 1;
 
@@ -23,6 +25,30 @@ struct Tetromino {
     QBrush brush;
     int rotation;
     const char *data;
+
+
+    int posToIndx(const QPoint &pos) const
+    {
+        if (rotation == 0) {
+            return  pos.y() * 4 + pos.x();
+        } else if (rotation == 1) {
+            return 12 + pos.y() - 4 * pos.x();
+        } else if (rotation == 2) {
+            return 15 - 4 * pos.y() - pos.x();
+        } else if (rotation == 3) {
+            return 3 - pos.y() + 4 * pos.x();
+        }
+
+        Q_ASSERT(false);
+        return -1;
+    }
+
+
+    // Tells if the square at position pos is filled
+    // Takes into account rotation
+    bool operator[](const QPoint &pos) const {
+        return data[posToIndx(pos)] != '0';
+    }
 };
 
 static Tetromino TETRS[] = {
@@ -31,64 +57,84 @@ static Tetromino TETRS[] = {
         QPen(QBrush(Qt::blue), TETR_PEN_WIDTH),
         QBrush(Qt::red),
         0,
-        "..x."
-        "..x."
-        ".xx."
-        "...."
+        "00#0"
+        "00#0"
+        "0##0"
+        "0000"
     },
     {
         QPoint(0,0),
         QPen(QBrush(Qt::blue), TETR_PEN_WIDTH),
         QBrush(Qt::green),
         0,
-        "..x."
-        ".xx."
-        "..x."
-        "...."
+        "00#0"
+        "0##0"
+        "00#0"
+        "0000"
+    },
+    {
+        QPoint(0,0),
+        QPen(QBrush(Qt::blue), TETR_PEN_WIDTH),
+        QBrush(Qt::yellow),
+        0,
+        "0##0"
+        "0##0"
+        "0000"
+        "0000"
     },
     {
         QPoint(0,0),
         QPen(QBrush(Qt::blue), TETR_PEN_WIDTH),
         QBrush(Qt::magenta),
         0,
-        ".xx."
-        ".xx."
-        "...."
-        "...."
+        "00#0"
+        "00#0"
+        "00#0"
+        "0000"
     }
 };
 
-bool tetrominoPos(QPoint &pos, const Tetromino &tetr, int k)
+
+void Tetris::drawTetromino(QPainter &painter, const Tetromino &tetr)
 {
-    const char *data = tetr.data;
-
-    if (data[k] == 'x'){
-        pos = QPoint(tetr.pos.x() + k % 4, tetr.pos.y() + k / 4);
-        return true;
-    }
-
-    return false;
-}
-
-
-void Tetris::drawTetromino(QPainter &painter, int tetrId)
-{
-    auto &tetromino = TETRS[tetrId];
-
-    for (int k = 0; k < 16; ++k) {
-        QPoint pos;
-        if (tetrominoPos(pos, tetromino, k)) {
-            painter.setPen(tetromino.pen);
-            painter.setBrush(tetromino.brush);
-            drawBlock(painter, pos);
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            QPoint pos(i, j);
+            if (tetr[pos]) {
+                painter.setPen(tetr.pen);
+                painter.setBrush(tetr.brush);
+                pos += tetr.pos;
+                drawBlock(painter, pos);
+            }
         }
     }
 }
 
+bool Tetris::fits(const Tetromino &tetr, const QPoint &iPos)
+{
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            QPoint pos(iPos.x() + i, iPos.y() + j);
+
+            // Piece does not fit is one of it's blocks is
+            // at the same position as a landscape block
+            for (auto &pair : landscape_) {
+                if (tetr[pos] && pair.first == pos) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
 
 Tetris::Tetris(const QString &title, int w, int h, int blockLen)
     : BlockGame (title, w, h, blockLen)
 {
+    newPiece();
+    period_ = 500;
+    gameStart();
 }
 
 void Tetris::paintEvent(QPaintEvent *event)
@@ -96,14 +142,37 @@ void Tetris::paintEvent(QPaintEvent *event)
     BlockGame::paintEvent(event);
     QPainter painter(this);
 
-    // Example tetromino drawing
+    drawTetromino(painter, *currentPiece_);
+}
 
-    TETRS[0].pos = QPoint{-1, 0};
-    drawTetromino(painter, 0);
+void Tetris::newPiece()
+{
+    const auto windowSize = this->size();
+    qsrand(QDateTime::currentDateTime().toTime_t());
 
-    TETRS[1].pos = QPoint{4, 4};
-    drawTetromino(painter, 1);
+    int tetrId = qrand() % 3;
+    int tetrRot = qrand() % 4;
 
-    TETRS[2].pos = QPoint{4, 8};
-    drawTetromino(painter, 2);
+    currentPiece_ = &TETRS[tetrId];
+    currentPiece_->rotation = tetrRot;
+
+    int x = windowSize.width() / blockLen_ / 2;
+    currentPiece_->pos = QPoint(x - 2, 0);
+}
+
+void Tetris::gameLoop()
+{
+    Q_ASSERT(currentPiece_);
+    QPoint nextPos = currentPiece_->pos + QPoint(0, 1);
+
+    if (fits(*currentPiece_, nextPos)) {
+        currentPiece_->pos = nextPos;
+    }
+
+    repaint();
+}
+
+void Tetris::keyPressEvent(QKeyEvent *event)
+{
+
 }

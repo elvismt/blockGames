@@ -15,6 +15,7 @@
 #pragma once
 #include <QWidget>
 #include <QColor>
+#include <QTimer>
 
 class BlockGame : public QWidget {
         Q_OBJECT
@@ -34,7 +35,14 @@ protected:
 
     void drawBlock(QPainter &painter, const QPoint pos, int len=1);
 
-private:
+
+protected slots:
+    virtual void gameLoop();
+    virtual void gameStart();
+
+protected:
     QColor backgroundColor_{Qt::white};
+    QTimer gameLoopTimer_;
+    int period_{100};
     int blockLen_ = DEFAULT_BLOCK_LEN;
 };

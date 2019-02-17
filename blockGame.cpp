@@ -15,6 +15,7 @@
 #include "blockGame.h"
 #include <QIcon>
 #include <QPainter>
+#include <QTimer>
 
 BlockGame::BlockGame(const QString &title, int w, int h, int blockLen)
 {
@@ -27,6 +28,8 @@ BlockGame::BlockGame(const QString &title, int w, int h, int blockLen)
     setMinimumSize(w, h);
     setMaximumSize(w, h);
     setAutoFillBackground(false);
+
+    QObject::connect(&gameLoopTimer_, SIGNAL(timeout()), this, SLOT(gameLoop()));
 }
 
 void BlockGame::paintEvent(QPaintEvent *)
@@ -45,4 +48,14 @@ void BlockGame::drawBlock(QPainter &painter, const QPoint iPos, int len)
     int twoLenWid = 2 * penWid;
     QPoint pos = QPoint(iPos.x()*blockLen_+penWid, iPos.y()*blockLen_+penWid);
     painter.drawRect(QRect(pos, QSize(len-twoLenWid, len-twoLenWid)));
+}
+
+void BlockGame::gameStart()
+{
+    if (!gameLoopTimer_.isActive())
+        gameLoopTimer_.start(period_);
+}
+
+void BlockGame::gameLoop()
+{
 }

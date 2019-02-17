@@ -16,6 +16,9 @@
 #include "blockGame.h"
 #include <QPen>
 #include <QBrush>
+#include <QVector>
+
+struct Tetromino;
 
 class Tetris: public BlockGame
 {
@@ -31,5 +34,17 @@ public:
 protected:
 
     virtual void paintEvent(QPaintEvent *event) override;
-    void drawTetromino(QPainter &painter, int tetrId);
+    void drawTetromino(QPainter &painter, const Tetromino &tetr);
+    void keyPressEvent(QKeyEvent *event) override;
+    void newPiece();
+    bool fits(const Tetromino &tetr, const QPoint &pos);
+
+protected slots:
+    virtual void gameLoop() override;
+
+
+protected:
+
+    Tetromino *currentPiece_{nullptr};
+    QVector<std::pair<QPoint,QColor>> landscape_;
 };
