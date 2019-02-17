@@ -16,9 +16,18 @@
 #include "blockGame.h"
 #include <QPen>
 #include <QBrush>
-#include <QVector>
+#include <QMap>
 
 struct Tetromino;
+constexpr int kWidth = 24;
+constexpr int kHeight = 32;
+
+inline bool qMapLessThanKey(const QPoint &key1, const QPoint &key2)
+{
+    int lhs = key1.y() * kWidth + key1.x();
+    int rhs = key2.y() * kWidth + key2.x();
+    return lhs < rhs;
+}
 
 class Tetris: public BlockGame
 {
@@ -27,8 +36,8 @@ class Tetris: public BlockGame
 public:
 
     Tetris(const QString &title="Tetris",
-           int w=24,
-           int h=36,
+           int w=kWidth,
+           int h=kHeight,
            int blockLen=DEFAULT_BLOCK_LEN);
 
 protected:
@@ -37,7 +46,9 @@ protected:
     void drawTetromino(QPainter &painter, const Tetromino &tetr);
     void keyPressEvent(QKeyEvent *event) override;
     void newPiece();
+    void fallUpperRows(int y);
     void addToLandscape();
+    bool checkRowComplete(int y);
     bool fits(const Tetromino &tetr, const QPoint &pos);
 
 protected slots:
@@ -47,11 +58,12 @@ protected slots:
 protected:
 
     struct LandscapeBlock {
-        QPoint pos;
         QColor pen;
         QColor brush;
     };
 
     Tetromino *currentPiece_{nullptr};
-    QVector<LandscapeBlock> landscape_;
+    QMap<QPoint,LandscapeBlock> landscape_;
+    int score_{0};
+    bool paused_{false};
 };
