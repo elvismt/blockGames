@@ -113,8 +113,8 @@ void Tetris::drawTetromino(QPainter &painter, const Tetromino &tetr)
 bool Tetris::fits(const Tetromino &tetr, const QPoint &iPos)
 {
     const auto size = this->size();
-    const int W = size.width() / blockLen_;
-    const int H = size.height() / blockLen_;
+    const int W = size.width() / gameBlockLen_;
+    const int H = size.height() / gameBlockLen_;
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -147,7 +147,7 @@ Tetris::Tetris(const QString &title, int w, int h, int blockLen)
     : BlockGame (title, w, h, blockLen)
 {
     newPiece();
-    period_ = 500;
+    gamePeriod_ = 500;
     qsrand(QDateTime::currentDateTime().toTime_t());
     gameStart();
 }
@@ -182,7 +182,7 @@ void Tetris::newPiece()
     currentPiece_ = &TETRS[tetrId];
     currentPiece_->rotation = tetrRot;
 
-    int x = windowSize.width() / blockLen_ / 2;
+    int x = windowSize.width() / gameBlockLen_ / 2;
     currentPiece_->pos = QPoint(x - 2, 0);
 }
 
@@ -207,7 +207,7 @@ void Tetris::addToLandscape()
 }
 
 void Tetris::fallUpperRows(int y) {
-    const int W = this->width() / blockLen_;
+    const int W = this->width() / gameBlockLen_;
 
     for (; y >= 0; --y) {
         for (int x = 0; x < W; ++x) {
@@ -222,7 +222,7 @@ void Tetris::fallUpperRows(int y) {
 }
 
 bool Tetris::checkRowComplete(int y) {
-    const int W = this->width() / blockLen_;
+    const int W = this->width() / gameBlockLen_;
     int found = 0;
 
     for (int x = 0; x < W; ++x) {
@@ -233,7 +233,8 @@ bool Tetris::checkRowComplete(int y) {
     }
 
     if (found == W) {
-        // complete row
+        // complete row, remove its blocks
+        // and make the upper ones fall
         for (int x = 0; x < W; ++x) {
             landscape_.remove(QPoint(x, y));
         }
@@ -263,47 +264,41 @@ void Tetris::gameLoop()
 void Tetris::keyPressEvent(QKeyEvent *event)
 {
     const auto key = event->key();
+    BlockGame::keyPressEvent(event);
 
-    if (key == Qt::Key_Enter || key == Qt::Key_Return) {
-        if (paused_) {
-            gameLoopTimer_.start(period_);
-        } else {
-            gameLoopTimer_.stop();
-        }
-        paused_ = !paused_;
+    if (gamePaused_) {
+        return;
     }
 
-    if (!paused_) {
-        if (key == Qt::Key_Up) {
-            const int oldRot = currentPiece_->rotation;
-            const QPoint pos = currentPiece_->pos;
-            currentPiece_->rotation = ((oldRot + 1) % 4);
-            if (!fits(*currentPiece_, pos)) {
-                // Must check if this rotation puts the
-                // tetromino out of bounds
-                currentPiece_->rotation = oldRot;
-            }
+    if (key == Qt::Key_Up) {
+        const int oldRot = currentPiece_->rotation;
+        const QPoint pos = currentPiece_->pos;
+        currentPiece_->rotation = ((oldRot + 1) % 4);
+        if (!fits(*currentPiece_, pos)) {
+            // Must check if this rotation puts the
+            // tetromino out of bounds
+            currentPiece_->rotation = oldRot;
+        }
+        repaint();
+    } else if (key == Qt::Key_Left) {
+        auto nextPos = currentPiece_->pos + QPoint(-1, 0);
+        if (fits(*currentPiece_, nextPos)) {
+            currentPiece_->pos = nextPos;
             repaint();
-        } else if (key == Qt::Key_Left) {
-            auto nextPos = currentPiece_->pos + QPoint(-1, 0);
-            if (fits(*currentPiece_, nextPos)) {
-                currentPiece_->pos = nextPos;
-                repaint();
-            }
-        } else if (key == Qt::Key_Right) {
-            auto nextPos = currentPiece_->pos + QPoint(1, 0);
-            if (fits(*currentPiece_, nextPos)) {
-                currentPiece_->pos = nextPos;
-                repaint();
-            }
-        } else if (key == Qt::Key_Down) {
-            auto nextPos = currentPiece_->pos + QPoint(0, 1);
-            if (fits(*currentPiece_, nextPos)) {
-                currentPiece_->pos = nextPos;
-                repaint();
-            }
+        }
+    } else if (key == Qt::Key_Right) {
+        auto nextPos = currentPiece_->pos + QPoint(1, 0);
+        if (fits(*currentPiece_, nextPos)) {
+            currentPiece_->pos = nextPos;
+            repaint();
+        }
+    } else if (key == Qt::Key_Down) {
+        auto nextPos = currentPiece_->pos + QPoint(0, 1);
+        if (fits(*currentPiece_, nextPos)) {
+            currentPiece_->pos = nextPos;
+            repaint();
         }
     }
-
-    QWidget::keyPressEvent(event);
 }
+
+// tetris.cpp

@@ -19,15 +19,8 @@
 #include <QMap>
 
 struct Tetromino;
-constexpr int kWidth = 24;
-constexpr int kHeight = 32;
-
-inline bool qMapLessThanKey(const QPoint &key1, const QPoint &key2)
-{
-    int lhs = key1.y() * kWidth + key1.x();
-    int rhs = key2.y() * kWidth + key2.x();
-    return lhs < rhs;
-}
+constexpr int kTetrisWidth = 24;
+constexpr int kTetrisHeight = 32;
 
 class Tetris: public BlockGame
 {
@@ -36,9 +29,9 @@ class Tetris: public BlockGame
 public:
 
     Tetris(const QString &title="Tetris",
-           int w=kWidth,
-           int h=kHeight,
-           int blockLen=DEFAULT_BLOCK_LEN);
+           int w=kTetrisWidth,
+           int h=kTetrisHeight,
+           int blockLen=kDefaultBlockLength);
 
 protected:
 
@@ -65,5 +58,4 @@ protected:
     Tetromino *currentPiece_{nullptr};
     QMap<QPoint,LandscapeBlock> landscape_;
     int score_{0};
-    bool paused_{false};
 };

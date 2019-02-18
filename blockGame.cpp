@@ -16,15 +16,16 @@
 #include <QIcon>
 #include <QPainter>
 #include <QTimer>
+#include <QKeyEvent>
 
 BlockGame::BlockGame(const QString &title, int w, int h, int blockLen)
 {
     setWindowTitle(title);
     setWindowIcon(QIcon(":icons/Pacman1.ico"));
 
-    blockLen_ = blockLen;
-    w *= blockLen_;
-    h *= blockLen_;
+    gameBlockLen_ = blockLen;
+    w *= gameBlockLen_;
+    h *= gameBlockLen_;
     setMinimumSize(w, h);
     setMaximumSize(w, h);
     setAutoFillBackground(false);
@@ -38,24 +39,50 @@ void BlockGame::paintEvent(QPaintEvent *)
     QPainter painter(this);
 
     // Make background white
-    painter.fillRect(QRect({0,0}, size), QBrush(backgroundColor_));
+    painter.fillRect(QRect({0,0}, size), QBrush(gameBackgroundColor_));
 }
 
 void BlockGame::drawBlock(QPainter &painter, const QPoint iPos, int len)
 {
-    len *= blockLen_;
+    len *= gameBlockLen_;
     int penWid = painter.pen().width() / 2;
     int twoLenWid = 2 * penWid;
-    QPoint pos = QPoint(iPos.x()*blockLen_+penWid, iPos.y()*blockLen_+penWid);
+    QPoint pos = QPoint(iPos.x()*gameBlockLen_+penWid, iPos.y()*gameBlockLen_+penWid);
     painter.drawRect(QRect(pos, QSize(len-twoLenWid, len-twoLenWid)));
 }
 
 void BlockGame::gameStart()
 {
-    if (!gameLoopTimer_.isActive())
-        gameLoopTimer_.start(period_);
+    if (!gameLoopTimer_.isActive()) {
+        gameLoopTimer_.start(gamePeriod_);
+        gamePaused_ = false;
+    }
+}
+
+void BlockGame::gamePause()
+{
+    if (gameLoopTimer_.isActive()) {
+        gameLoopTimer_.stop();
+        gamePaused_ = true;
+    }
 }
 
 void BlockGame::gameLoop()
 {
+    // pass
+}
+
+void BlockGame::keyPressEvent(QKeyEvent *event)
+{
+    const auto key = event->key();
+
+    if (key == Qt::Key_P) {
+        if (gamePaused_) {
+            gameStart();
+        } else {
+            gamePause();
+        }
+    }
+
+    QWidget::keyPressEvent(event);
 }
